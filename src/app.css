@@ -1,0 +1,127 @@
+/* Daedalus / Iris Labyrinth tokens (verbatim from the daedalus-design skill). */
+:root {
+  --bg: hsl(210 34% 6%);
+  --surface: hsl(210 25% 9%);
+  --surface-warm: hsl(210 21% 13%);
+  --fg: hsl(210 16% 90%);
+  --fg-2: hsl(210 14% 72%);
+  --muted: hsl(210 10% 58%);
+  --meta: hsl(210 9% 46%);
+  --border: hsl(210 16% 20%);
+  --border-soft: hsl(210 16% 20% / 0.58);
+  --accent: hsl(174 100% 29%);
+  --accent-on: hsl(210 34% 6%);
+  --accent-hover: hsl(174 86% 34%);
+  --accent-active: hsl(174 100% 24%);
+  --success: hsl(151 55% 41%);
+  --warn: hsl(35 43% 48%);
+  --danger: hsl(355 49% 42%);
+  --font-body: "Inter Variable", Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Berkeley Mono", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 9999px;
+  --focus-ring: 0 0 0 2px color-mix(in oklab, var(--accent), transparent 18%), 0 0 0 5px color-mix(in oklab, var(--accent), transparent 78%);
+  --motion-fast: 140ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+h1, h2, h3 { margin: 0; letter-spacing: -0.02em; font-weight: 600; }
+:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-sm); }
+
+/* App shell: sidebar-first. */
+.app-shell { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+.sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: var(--space-4, 16px);
+  display: flex; flex-direction: column; gap: 4px;
+  position: sticky; top: 0; height: 100vh;
+}
+.sidebar .brand { display: flex; align-items: center; gap: 10px; padding: 8px 10px 18px; font-weight: 600; letter-spacing: -0.02em; }
+.sidebar .brand .dot { width: 10px; height: 10px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+.nav-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  color: var(--fg-2); font-size: 14px;
+  transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast);
+}
+.nav-link:hover { background: var(--surface-warm); color: var(--fg); }
+.nav-link[aria-current="page"] { background: color-mix(in oklab, var(--accent), transparent 86%); color: var(--fg); }
+.sidebar .spacer { flex: 1; }
+.sidebar .footer { color: var(--meta); font-size: 12px; padding: 8px 10px; border-top: 1px solid var(--border-soft); display: flex; justify-content: space-between; align-items: center; }
+
+.main { padding: 28px 32px; max-width: 1180px; width: 100%; }
+.page-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
+.page-head h1 { font-size: 24px; }
+.page-head .sub { color: var(--muted); font-size: 13px; }
+
+/* Panels + grid */
+.grid { display: grid; gap: 16px; }
+.grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+}
+.stat { display: flex; flex-direction: column; gap: 6px; }
+.stat .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+.stat .value { font-size: 32px; font-weight: 600; letter-spacing: -0.03em; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border-soft); font-size: 14px; }
+th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+tr:last-child td { border-bottom: none; }
+td.mono, .mono { font-family: var(--font-mono); font-size: 13px; color: var(--fg-2); }
+
+/* Status pills */
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: var(--radius-pill); font-size: 12px; border: 1px solid var(--border); color: var(--fg-2); }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.pill.healthy { color: var(--success); border-color: color-mix(in oklab, var(--success), transparent 60%); }
+.pill.healthy::before { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.pill.degraded { color: var(--warn); border-color: color-mix(in oklab, var(--warn), transparent 55%); }
+.pill.degraded::before { background: var(--warn); }
+.pill.error, .pill.blocked { color: var(--danger); border-color: color-mix(in oklab, var(--danger), transparent 55%); }
+.pill.error::before, .pill.blocked::before { background: var(--danger); }
+.pill.observing { color: var(--muted); }
+.pill.observing::before { animation: pulse 1.2s var(--ease-standard) infinite; }
+@keyframes pulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 13px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--surface-warm); color: var(--fg);
+  font-size: 13px; font-family: inherit; cursor: pointer;
+  transition: background var(--motion-fast), border-color var(--motion-fast);
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+.btn.primary:hover { background: var(--accent-hover); }
+.btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+/* Auth */
+.auth-wrap { min-height: 100vh; display: grid; place-items: center; }
+.auth-card { width: 340px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.field label { font-size: 13px; color: var(--fg-2); }
+.input { padding: 9px 11px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); color: var(--fg); font: inherit; }
+.error-text { color: var(--danger); font-size: 13px; margin-bottom: 12px; }
+.empty { color: var(--muted); padding: 28px; text-align: center; }
+.banner { border: 1px solid color-mix(in oklab, var(--danger), transparent 55%); color: var(--danger); background: color-mix(in oklab, var(--danger), transparent 90%); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 18px; font-size: 13px; }
