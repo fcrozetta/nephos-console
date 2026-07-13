@@ -11,7 +11,12 @@
     {/if}
     <form method="POST">
       <div class="field">
-        <label for="password">Admin password</label>
+        <label for="username">Username</label>
+        <input class="input" id="username" name="username" type="text" autocomplete="username"
+          value={form?.username ?? ''} required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
         <input class="input" id="password" name="password" type="password" autocomplete="current-password" required />
       </div>
       <button class="btn primary" type="submit" style="width:100%;justify-content:center">Sign in</button>
