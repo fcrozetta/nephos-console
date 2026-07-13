@@ -1,8 +1,15 @@
 import crypto from 'node:crypto';
-import { ADMIN_PASSWORD, SESSION_SECRET } from './env';
+import { SESSION_SECRET } from './env';
 
 export const SESSION_COOKIE = 'nephos_console_session';
-const SUBJECT = 'admin';
+
+export const SESSION_COOKIE_OPTS = {
+  path: '/',
+  httpOnly: true,
+  sameSite: 'lax',
+  secure: false, // v1 local http; set true behind TLS in-cluster
+  maxAge: 60 * 60 * 12
+} as const;
 
 function sign(value: string): string {
   const mac = crypto.createHmac('sha256', SESSION_SECRET).update(value).digest('base64url');
@@ -21,20 +28,15 @@ function unsign(signed: string): string | null {
   return null;
 }
 
-/** v1 single-admin gate: timing-safe compare against the configured password.
- * The auth seam is intentionally small so Zitadel OIDC can replace it later. */
-export function verifyAdminPassword(password: string): boolean {
-  if (!ADMIN_PASSWORD) return false;
-  const a = Buffer.from(password);
-  const b = Buffer.from(ADMIN_PASSWORD);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
-
-export function issueSessionValue(): string {
-  return sign(SUBJECT);
+/** Mint a session for an admin subject already authenticated by the Nephos
+ * API (POST /auth/login). The auth seam is intentionally small so Zitadel OIDC
+ * can replace it later. */
+export function issueSessionValue(subject: string): string {
+  return sign(subject);
 }
 
 export function readSession(signed: string | undefined): { name: string } | null {
   if (!signed) return null;
-  return unsign(signed) === SUBJECT ? { name: SUBJECT } : null;
+  const subject = unsign(signed);
+  return subject ? { name: subject } : null;
 }
