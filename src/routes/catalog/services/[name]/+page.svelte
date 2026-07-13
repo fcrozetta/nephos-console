@@ -1,7 +1,10 @@
 <script lang="ts">
   let { data, form } = $props();
   const entry = $derived(data.entry);
-  const options = $derived((entry.config?.options ?? []) as any[]);
+  const allOptions = $derived((entry.config?.options ?? []) as any[]);
+  // Generated options are materialized by Nephos, not entered here.
+  const options = $derived(allOptions.filter((o) => !o.generated));
+  const generated = $derived(allOptions.filter((o) => o.generated));
   const prev = $derived((form?.values ?? {}) as Record<string, string>);
 </script>
 
@@ -53,6 +56,14 @@
       {#if opt.description}<span class="sub" style="color:var(--meta);font-size:12px">{opt.description}</span>{/if}
     </div>
   {/each}
+
+  {#if generated.length}
+    <div class="field">
+      <span class="sub" style="color:var(--meta);font-size:12px">
+        Nephos generates {generated.length} secret{generated.length > 1 ? 's' : ''} for you: {generated.map((o) => o.label ?? o.name).join(', ')}. No input needed.
+      </span>
+    </div>
+  {/if}
 
   <button class="btn primary" type="submit" style="justify-content:center;width:100%">Install</button>
 </form>
