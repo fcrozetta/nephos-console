@@ -40,7 +40,7 @@
       <tbody>
         {#each data.apps as a}
           <tr>
-            <td class="mono">{a.slug}</td>
+            <td class="mono"><a href={`/apps/${a.slug}`} style="color:var(--accent)">{a.slug}</a></td>
             <td>{a.lifecycle}</td>
             <td><span class="pill {level(a.status)}">{level(a.status)}</span></td>
             <td>

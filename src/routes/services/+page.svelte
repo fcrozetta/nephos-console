@@ -41,7 +41,7 @@
       <tbody>
         {#each data.services as s}
           <tr>
-            <td class="mono">{s.slug}</td>
+            <td class="mono"><a href={`/services/${s.slug}`} style="color:var(--accent)">{s.slug}</a></td>
             <td>{s.lifecycle}</td>
             <td><span class="pill {level(s.status)}">{level(s.status)}</span></td>
             <td style="text-align:right">
