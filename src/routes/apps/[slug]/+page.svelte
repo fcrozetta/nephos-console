@@ -65,7 +65,13 @@
   <div class="panel" style="margin-bottom:16px">
     <h2 style="font-size:14px;margin:0 0 10px;color:var(--muted)">Routes</h2>
     {#each routes as r}
-      <div class="mono">{r.url ?? r.host ?? JSON.stringify(r)}</div>
+      <div style="margin-bottom:6px">
+        <a class="mono" href={r.canonicalUrl} target="_blank" rel="noreferrer" style="color:var(--accent)">{r.canonicalUrl}</a>
+        <span class="pill {level(r.status)}" style="margin-left:8px">{level(r.status)}</span>
+        {#each (r.aliases ?? []) as al}
+          <a class="mono" href={al} target="_blank" rel="noreferrer" style="display:block;color:var(--meta);font-size:12px">{al}</a>
+        {/each}
+      </div>
     {/each}
   </div>
 {/if}
