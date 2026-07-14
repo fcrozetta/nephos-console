@@ -2,3 +2,7 @@ allowBuilds:
   esbuild: true
 onlyBuiltDependencies:
   - esbuild
+overrides:
+  # SvelteKit pins cookie ^0.6.0 (vulnerable); force the API-compatible 0.7.x
+  # security fix. Dependabot can't do this itself because kit caps the range.
+  cookie: ^0.7.0
