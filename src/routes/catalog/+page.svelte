@@ -40,13 +40,14 @@
     <div class="empty">No apps in the catalog.</div>
   {:else}
     <table>
-      <thead><tr><th>Name</th><th>Requires</th><th>Source</th></tr></thead>
+      <thead><tr><th>Name</th><th>Requires</th><th>Source</th><th></th></tr></thead>
       <tbody>
         {#each data.apps as a}
           <tr>
             <td class="mono">{a.name}</td>
             <td>{(a.requires ?? []).map((r: any) => r.protocol ? `${r.capability}/${r.protocol}` : r.capability).join(', ') || '—'}</td>
             <td><span class="pill">{a.source}</span></td>
+            <td style="text-align:right"><a class="btn" href={`/catalog/apps/${a.name}?source=${a.source}`}>Install…</a></td>
           </tr>
         {/each}
       </tbody>
