@@ -4,17 +4,11 @@ FROM node:22-alpine AS build
 WORKDIR /app
 RUN npm install -g pnpm@11
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-# pnpm 11 gates esbuild's build script at every step (install, and pnpm run's
-# pre-run verify), even with onlyBuiltDependencies set. Work around it: tolerate
-# the gate on install, set up esbuild's binary directly, and invoke vite
-# directly (not via `pnpm run`) so the pre-run gate never triggers. The vite
-# build fails loudly if deps are actually broken.
-RUN pnpm install || true
-RUN node node_modules/esbuild/install.js || true
+RUN pnpm install --frozen-lockfile
 COPY . .
-RUN node_modules/.bin/vite build
+RUN pnpm run build
 # Drop dev dependencies so only runtime deps ship in the final image.
-RUN pnpm prune --prod || true
+RUN pnpm prune --prod
 
 FROM node:22-alpine AS runtime
 WORKDIR /app
