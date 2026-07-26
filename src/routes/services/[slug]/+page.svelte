@@ -10,6 +10,7 @@
   const config = $derived((s.config ?? {}) as Record<string, unknown>);
   const dependents = $derived((s.dependents ?? []) as any[]);
   const provides = $derived((s.provides ?? []) as any[]);
+  const portals = $derived((s.portals ?? []) as any[]);
 
   onMount(() => {
     const id = setInterval(() => invalidateAll(), 5000);
@@ -60,6 +61,37 @@
     </form>
   </div>
 </div>
+
+{#if portals.length}
+  <div class="panel" style="margin-bottom:16px">
+    <h2 style="font-size:14px;margin:0 0 10px;color:var(--muted)">Portals</h2>
+    {#each portals as p}
+      <div style="margin-bottom:10px">
+        {#if p.published}
+          <a class="mono" href={p.canonicalUrl} target="_blank" rel="noreferrer" style="color:var(--accent)">{p.canonicalUrl}</a>
+          <span class="pill {level(p.status)}" style="margin-left:8px">{level(p.status)}</span>
+          {#if p.displayName}<span class="sub" style="color:var(--meta);margin-left:8px">{p.displayName}</span>{/if}
+          {#each (p.aliases ?? []) as al}
+            <a class="mono" href={al} target="_blank" rel="noreferrer" style="display:block;color:var(--meta);font-size:12px">{al}</a>
+          {/each}
+        {:else}
+          <span class="mono">{p.displayName ?? p.name}</span>
+          <span class="pill" style="margin-left:8px">unpublished</span>
+          <!-- Portal exposure is default-deny per root domain, so unpublished is
+               the normal state on a fresh install. Say what to do about it. -->
+          <div class="sub" style="color:var(--meta);font-size:12px;margin-top:4px">
+            {#if p.unpublishedReason === 'no_portal_eligible_domain'}
+              No root domain allows Service portals.
+              <a href="/platform" style="color:var(--accent)">Allow one on the Platform page →</a>
+            {:else}
+              {p.unpublishedReason ?? 'Not published.'}
+            {/if}
+          </div>
+        {/if}
+      </div>
+    {/each}
+  </div>
+{/if}
 
 {#if provides.length}
   <div class="panel" style="margin-bottom:16px">

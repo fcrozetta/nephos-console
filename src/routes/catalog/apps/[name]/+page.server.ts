@@ -12,9 +12,11 @@ const protoEq = (a: unknown, b: unknown) => (a ?? null) === (b ?? null);
 
 export const load: PageServerLoad = async ({ params, url }) => {
   const source = url.searchParams.get('source') ?? undefined;
-  const [entryRes, servicesRes] = await Promise.all([
+  const [entryRes, servicesRes, domainsRes] = await Promise.all([
     fetchEntry(params.name, source),
-    nephos.GET('/services')
+    nephos.GET('/services'),
+    // Root domains drive the generated route host, so the form can preview it.
+    nephos.GET('/platform/config/domains')
   ]);
   if (entryRes.error || !entryRes.data) {
     throw error(entryRes.response?.status ?? 404, 'Catalog entry not found');
@@ -38,7 +40,13 @@ export const load: PageServerLoad = async ({ params, url }) => {
       )
       .map((s) => s.slug as string);
   }
-  return { entry, source, requires, eligibleByAlias };
+  return {
+    entry,
+    source,
+    requires,
+    eligibleByAlias,
+    domains: ((domainsRes.data as any)?.domains ?? []) as any[]
+  };
 };
 
 function coerce(type: string, raw: FormDataEntryValue | null): unknown {

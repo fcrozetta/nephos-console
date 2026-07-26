@@ -1,6 +1,14 @@
 <script lang="ts">
+  import { portalCanonicalDomain, previewUrls } from '$lib/hosts';
+
   let { data, form } = $props();
   const entry = $derived(data.entry);
+  const portals = $derived((entry.portals ?? []) as any[]);
+  const portalDomain = $derived(portalCanonicalDomain((data.domains ?? []) as any[]));
+  // Live preview: the host comes from the instance name, so it must track typing.
+  let instanceName = $state('');
+  const previewSlug = $derived(instanceName.trim() || entry.name);
+  const preview = $derived(previewUrls(previewSlug, portals, portalDomain));
   const allOptions = $derived((entry.config?.options ?? []) as any[]);
   // Generated options are materialized by Nephos, not entered here.
   const options = $derived(allOptions.filter((o) => !o.generated));
@@ -58,8 +66,34 @@
 <form method="POST" action="?/install" class="panel" style="max-width:560px">
   <div class="field">
     <label for="instanceName">Instance name</label>
-    <input class="input" id="instanceName" name="instanceName" placeholder={entry.name} value={prev.instanceName ?? ''} />
+    <input class="input" id="instanceName" name="instanceName" placeholder={entry.name}
+      bind:value={instanceName} />
+    {#if portals.length}
+      <span class="sub" style="color:var(--meta);font-size:12px">
+        Names the portal host, so prefer a role over the implementation
+        (e.g. <span class="mono">auth</span> rather than <span class="mono">{entry.name}</span>).
+        Fixed at install.
+      </span>
+    {/if}
   </div>
+
+  {#if portals.length}
+    <div class="field">
+      <span class="sub" style="color:var(--meta)">Portal URL</span>
+      {#if portalDomain}
+        {#each preview as p}
+          <div class="mono" style="font-size:12px">{p.url}
+            {#if preview.length > 1}<span style="color:var(--meta)"> · {p.name}</span>{/if}
+          </div>
+        {/each}
+      {:else}
+        <span class="sub" style="color:var(--meta);font-size:12px">
+          No root domain allows Service portals, so this will install unpublished.
+          <a href="/platform" style="color:var(--accent)">Allow one →</a>
+        </span>
+      {/if}
+    </div>
+  {/if}
 
   {#each basic as opt}{@render field(opt)}{/each}
 

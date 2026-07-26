@@ -30,9 +30,26 @@ export const actions: Actions = {
       return fail(400, { error: 'invalid', message: 'Name and domain are required.', name, domain });
     }
     const res = await nephos.POST('/platform/config/domains', {
-      body: { name, domain, default: isDefault } as any
+      body: {
+        name,
+        domain,
+        default: isDefault,
+        // Default-deny: a new domain carries Service portals only if asked.
+        allowsServicePortals: f.get('allowsServicePortals') === 'on'
+      } as any
     });
     if (res.error) return failFrom(res, { name, domain });
+    return { ok: true };
+  },
+  setServicePortals: async ({ request }) => {
+    const f = await request.formData();
+    const name = String(f.get('name') ?? '');
+    const allowed = f.get('allowed') === 'true';
+    const res = await nephos.POST(
+      '/platform/config/domains/{name}/actions/set-service-portals',
+      { params: { path: { name } }, body: { allowed } as any }
+    );
+    if (res.error) return failFrom(res, { name });
     return { ok: true };
   },
   setDefault: async ({ request }) => {

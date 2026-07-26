@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { appCanonicalDomain, previewUrls } from '$lib/hosts';
+
   let { data, form } = $props();
   const entry = $derived(data.entry);
   const allOptions = $derived((entry.config?.options ?? []) as any[]);
@@ -10,6 +12,12 @@
   const advanced = $derived(options.filter((o) => !o.required && o.default != null));
   const requires = $derived((data.requires ?? []) as any[]);
   const eligibleByAlias = $derived((data.eligibleByAlias ?? {}) as Record<string, string[]>);
+  const routes = $derived((entry.routes ?? []) as any[]);
+  const routeDomain = $derived(appCanonicalDomain((data.domains ?? []) as any[]));
+  // Live preview: the host comes from the instance name, so it must track typing.
+  let instanceName = $state('');
+  const previewSlug = $derived(instanceName.trim() || entry.name);
+  const preview = $derived(previewUrls(previewSlug, routes, routeDomain));
   const prev = $derived((form?.values ?? {}) as Record<string, string>);
   const reqLabel = (r: any) => (r.protocol ? `${r.capability}/${r.protocol}` : r.capability);
 </script>
@@ -60,8 +68,30 @@
 <form method="POST" action="?/install" class="panel" style="max-width:560px">
   <div class="field">
     <label for="instanceName">Instance name</label>
-    <input class="input" id="instanceName" name="instanceName" placeholder={entry.name} value={prev.instanceName ?? ''} />
+    <input class="input" id="instanceName" name="instanceName" placeholder={entry.name}
+      bind:value={instanceName} />
+    {#if routes.length}
+      <span class="sub" style="color:var(--meta);font-size:12px">Names the route host. Fixed at install.</span>
+    {/if}
   </div>
+
+  {#if routes.length}
+    <div class="field">
+      <span class="sub" style="color:var(--meta)">Route URL</span>
+      {#if routeDomain}
+        {#each preview as p}
+          <div class="mono" style="font-size:12px">{p.url}
+            {#if preview.length > 1}<span style="color:var(--meta)"> · {p.name}</span>{/if}
+          </div>
+        {/each}
+      {:else}
+        <span class="sub" style="color:var(--meta);font-size:12px">
+          No root domain configured.
+          <a href="/platform" style="color:var(--accent)">Add one →</a>
+        </span>
+      {/if}
+    </div>
+  {/if}
 
   {#if requires.length}
     <h2 style="font-size:14px;margin:18px 0 8px;color:var(--muted)">Bindings</h2>

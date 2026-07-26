@@ -6,7 +6,10 @@
 <div class="page-head">
   <div>
     <h1>Platform</h1>
-    <div class="sub">Domains used for App routes. The default suffix is applied when an App does not pin one.</div>
+    <div class="sub">
+      Domains used for App routes and Service portals. Portals are default-deny per
+      domain, so an admin surface is never published just by installing a Service.
+    </div>
   </div>
 </div>
 
@@ -18,15 +21,31 @@
     <div class="empty">No platform domains yet. Add one below.</div>
   {:else}
     <table>
-      <thead><tr><th>Name</th><th>Domain</th><th>Default</th><th style="text-align:right">Actions</th></tr></thead>
+      <thead><tr><th>Name</th><th>Domain</th><th>Default</th><th>Service portals</th><th style="text-align:right">Actions</th></tr></thead>
       <tbody>
         {#each data.domains as d}
           <tr>
             <td class="mono">{d.name}</td>
             <td class="mono">{d.domain}</td>
             <td>{#if d.default}<span class="pill healthy">default</span>{/if}</td>
+            <td>
+              {#if d.allowsServicePortals}
+                <span class="pill healthy">allowed</span>
+              {:else}
+                <span class="pill">denied</span>
+              {/if}
+            </td>
             <td style="text-align:right">
               <div style="display:inline-flex;gap:6px;justify-content:flex-end">
+                <form method="POST" action="?/setServicePortals" use:enhance style="display:inline"
+                  onsubmit={(e) => {
+                    if (!d.allowsServicePortals &&
+                        !confirm(`Publish Service portals on ${d.domain}? Admin UIs become reachable at *.${d.domain}.`)) e.preventDefault();
+                  }}>
+                  <input type="hidden" name="name" value={d.name} />
+                  <input type="hidden" name="allowed" value={d.allowsServicePortals ? 'false' : 'true'} />
+                  <button class="btn" type="submit">{d.allowsServicePortals ? 'deny portals' : 'allow portals'}</button>
+                </form>
                 {#if !d.default}
                   <form method="POST" action="?/setDefault" use:enhance style="display:inline">
                     <input type="hidden" name="name" value={d.name} />
@@ -57,8 +76,12 @@
     <label for="domain">Domain suffix</label>
     <input class="input" id="domain" name="domain" placeholder="nephos.localhost" value={(form as any)?.domain ?? ''} required />
   </div>
-  <label style="display:flex;gap:8px;align-items:center;margin:6px 0 14px">
+  <label style="display:flex;gap:8px;align-items:center;margin:6px 0 6px">
     <input type="checkbox" name="default" /> <span class="sub">Make this the default</span>
+  </label>
+  <label style="display:flex;gap:8px;align-items:center;margin:0 0 14px">
+    <input type="checkbox" name="allowsServicePortals" />
+    <span class="sub">Allow Service portals (publishes admin UIs on this domain)</span>
   </label>
   <button class="btn primary" type="submit" style="justify-content:center;width:100%">Add domain</button>
 </form>
