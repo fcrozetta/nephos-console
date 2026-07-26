@@ -11,6 +11,7 @@
   const provides = $derived((s.provides ?? []) as any[]);
   const portals = $derived((s.portals ?? []) as any[]);
   const options = $derived((data.options ?? []) as any[]);
+  const credentials = $derived((s.credentials ?? null) as any);
 
   /** Config rows to render, merging the stored payload with the option specs.
    *
@@ -42,15 +43,32 @@
    * flash and vanish. Holding it here also means "hide" is instant rather than a
    * server round-trip. */
   let revealed = $state<Record<string, { value: string; source: string }>>({});
+  // Explicit, because the `form` fallback below would otherwise resurrect a value
+  // the operator just hid: form still holds the last reveal for the whole visit.
+  let hidden = $state(new Set<string>());
 
   $effect(() => {
     const result = form?.revealed;
-    if (result) revealed[result.option] = result;
+    if (!result) return;
+    revealed[result.option] = result;
+    if (hidden.has(result.option)) {
+      const next = new Set(hidden);
+      next.delete(result.option);
+      hidden = next;
+    }
   });
 
-  const revealedFor = (name: string) => revealed[name] ?? null;
+  /** Falls back to `form` so the value also renders without JavaScript: effects
+   * do not run during SSR, so local state is empty on the server response. After
+   * hydration the effect has copied it and local state takes over. */
+  const revealedFor = (name: string) => {
+    if (hidden.has(name)) return null;
+    return revealed[name] ?? (form?.revealed?.option === name ? form.revealed : null);
+  };
+
   const hide = (name: string) => {
     delete revealed[name];
+    hidden = new Set([...hidden, name]);
   };
 
   $effect(() => {
@@ -134,6 +152,43 @@
         {/if}
       </div>
     {/each}
+  </div>
+{/if}
+
+{#if credentials}
+  <div class="panel" style="margin-bottom:16px">
+    <h2 style="font-size:14px;margin:0 0 10px;color:var(--muted)">Login</h2>
+    <table>
+      <tbody>
+        <tr>
+          <td class="mono">username</td>
+          <td class="mono">{credentials.username ?? '—'}</td>
+          <td style="width:1%"></td>
+        </tr>
+        <tr>
+          <td class="mono">password</td>
+          <td class="mono">
+            {#if revealedFor(credentials.passwordOption)}
+              {revealedFor(credentials.passwordOption)?.value}
+            {:else}
+              ••••••••
+            {/if}
+          </td>
+          <td style="text-align:right;width:1%">
+            {#if revealedFor(credentials.passwordOption)}
+              <button class="btn" type="button" onclick={() => hide(credentials.passwordOption)}>
+                hide
+              </button>
+            {:else}
+              <form method="POST" action="?/reveal" use:enhance style="display:inline">
+                <input type="hidden" name="option" value={credentials.passwordOption} />
+                <button class="btn" type="submit">reveal</button>
+              </form>
+            {/if}
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 {/if}
 
