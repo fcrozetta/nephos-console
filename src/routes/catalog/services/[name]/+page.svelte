@@ -6,7 +6,15 @@
   const portals = $derived((entry.portals ?? []) as any[]);
   const portalDomain = $derived(portalCanonicalDomain((data.domains ?? []) as any[]));
   // Live preview: the host comes from the instance name, so it must track typing.
-  let instanceName = $state('');
+  // `typed` is an override, not the value: the displayed name falls back to what
+  // the failed install resubmitted, so an error keeps the operator's instance name
+  // instead of clearing it while every other field survives. Deriving rather than
+  // seeding $state also keeps this correct if the form ever gains use:enhance,
+  // which updates `form` without remounting.
+  let typed = $state<string | null>(null);
+  const instanceName = $derived(
+    typed ?? String((form?.values as any)?.instanceName ?? '')
+  );
   const previewSlug = $derived(instanceName.trim() || entry.name);
   const preview = $derived(previewUrls(previewSlug, portals, portalDomain));
   const allOptions = $derived((entry.config?.options ?? []) as any[]);
@@ -67,7 +75,7 @@
   <div class="field">
     <label for="instanceName">Instance name</label>
     <input class="input" id="instanceName" name="instanceName" placeholder={entry.name}
-      bind:value={instanceName} />
+      value={instanceName} oninput={(e) => (typed = e.currentTarget.value)} />
     {#if portals.length}
       <span class="sub" style="color:var(--meta);font-size:12px">
         Names the portal host, so prefer a role over the implementation
