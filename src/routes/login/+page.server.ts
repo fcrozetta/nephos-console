@@ -22,7 +22,11 @@ export const actions: Actions = {
       return fail(401, { error: 'Invalid username or password.', username });
     }
 
-    cookies.set(SESSION_COOKIE, issueSessionValue(String(data.subject)), SESSION_COOKIE_OPTS);
+    cookies.set(
+      SESSION_COOKIE,
+      issueSessionValue(String(data.subject), (data as { token?: string }).token),
+      SESSION_COOKIE_OPTS
+    );
     throw redirect(303, '/');
   }
 };

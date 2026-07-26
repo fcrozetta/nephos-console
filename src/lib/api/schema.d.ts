@@ -55,6 +55,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout
+         * @description Revoke the presented bearer token.
+         *
+         *     Idempotent: an absent or already-revoked token still reports success, so a
+         *     client cleaning up cannot get stuck on a token the server no longer knows.
+         */
+        post: operations["logout_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/bindings": {
         parameters: {
             query?: never;
@@ -311,6 +334,33 @@ export interface paths {
         get: operations["get_service_services__service_instance__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/services/{service_instance}/config/{option}/actions/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal Service Config Secret
+         * @description Return one Service config secret in clear text (ADR 20260726).
+         *
+         *     Bearer-gated, unlike the rest of the API, because the value is a credential.
+         *
+         *     A generated option has no stored value at all -- `config_json` is `{}` -- so it
+         *     is resolved from the secrets provider using the same coordinate the deployer
+         *     synthesizes. That is the case this endpoint exists for: a credential Nephos
+         *     minted on the operator's behalf and never showed them.
+         */
+        post: operations["reveal_service_config_secret_services__service_instance__config__option__actions_reveal_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -622,6 +672,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: boolean;
+                    };
                 };
             };
         };
@@ -1118,6 +1190,40 @@ export interface operations {
             header?: never;
             path: {
                 service_instance: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_service_config_secret_services__service_instance__config__option__actions_reveal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_instance: string;
+                option: string;
             };
             cookie?: never;
         };
