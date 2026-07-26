@@ -1,7 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
-  import { onMount } from 'svelte';
   import { level } from '$lib/status';
 
   let { data, form } = $props();
@@ -36,13 +35,28 @@
       });
   });
 
-  const revealedFor = (name: string) =>
-    form?.revealed?.option === name ? form.revealed : null;
+  /** Revealed values, keyed by option name.
+   *
+   * Copied out of `form` into local state on purpose: `form` is navigation state,
+   * and the 5s `invalidateAll()` poll below clears it, which made a revealed value
+   * flash and vanish. Holding it here also means "hide" is instant rather than a
+   * server round-trip. */
+  let revealed = $state<Record<string, { value: string; source: string }>>({});
 
-  onMount(() => {
-    // Reveal results live in `form`, which a reload would discard; pause polling
-    // while one is on screen so a revealed value does not vanish mid-read.
-    if (form?.revealed) return;
+  $effect(() => {
+    const result = form?.revealed;
+    if (result) revealed[result.option] = result;
+  });
+
+  const revealedFor = (name: string) => revealed[name] ?? null;
+  const hide = (name: string) => {
+    delete revealed[name];
+  };
+
+  $effect(() => {
+    // Reactive, unlike the onMount check this replaces: that ran once at mount
+    // when nothing was revealed yet, so the poll never actually paused.
+    if (Object.keys(revealed).length > 0) return;
     const id = setInterval(() => invalidateAll(), 5000);
     return () => clearInterval(id);
   });
@@ -178,12 +192,14 @@
             </td>
             <td style="text-align:right;width:1%">
               {#if row.secret}
-                <form method="POST" action="?/reveal" use:enhance style="display:inline">
-                  <input type="hidden" name="option" value={row.name} />
-                  <button class="btn" type="submit">
-                    {revealedFor(row.name) ? 'hide' : 'reveal'}
-                  </button>
-                </form>
+                {#if revealedFor(row.name)}
+                  <button class="btn" type="button" onclick={() => hide(row.name)}>hide</button>
+                {:else}
+                  <form method="POST" action="?/reveal" use:enhance style="display:inline">
+                    <input type="hidden" name="option" value={row.name} />
+                    <button class="btn" type="submit">reveal</button>
+                  </form>
+                {/if}
               {/if}
             </td>
           </tr>
