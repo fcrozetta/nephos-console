@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
   import { level } from '$lib/status';
+  import { SvelteSet } from 'svelte/reactivity';
 
   let { data, form } = $props();
   const s = $derived(data.service);
@@ -45,17 +46,20 @@
   let revealed = $state<Record<string, { value: string; source: string }>>({});
   // Explicit, because the `form` fallback below would otherwise resurrect a value
   // the operator just hid: form still holds the last reveal for the whole visit.
-  let hidden = $state(new Set<string>());
+  let hidden = $state(new SvelteSet<string>());
+
+  // Tracks which reveal response has already been applied. Without it the effect
+  // read `hidden`, so hiding a value retriggered it, `form.revealed` was still
+  // populated, and the credential reappeared immediately. Keyed on the response
+  // rather than on `hidden` so only a genuinely new reveal clears the marker.
+  let appliedReveal: unknown = null;
 
   $effect(() => {
     const result = form?.revealed;
-    if (!result) return;
+    if (!result || result === appliedReveal) return;
+    appliedReveal = result;
     revealed[result.option] = result;
-    if (hidden.has(result.option)) {
-      const next = new Set(hidden);
-      next.delete(result.option);
-      hidden = next;
-    }
+    hidden.delete(result.option);
   });
 
   /** Falls back to `form` so the value also renders without JavaScript: effects
@@ -68,7 +72,7 @@
 
   const hide = (name: string) => {
     delete revealed[name];
-    hidden = new Set([...hidden, name]);
+    hidden.add(name);
   };
 
   $effect(() => {

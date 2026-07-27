@@ -8,10 +8,14 @@ export const load: PageServerLoad = async ({ params }) => {
     params: { path: { service_instance: params.slug } }
   });
   if (r.error || !r.data) throw error(r.response?.status ?? 404, 'Service instance not found');
+  // Omit `source` when the service has none. String(undefined) sent a literal
+  // `source=undefined`, which defeats the default-source lookup; the ignored
+  // error then left `options` empty and silently hid the generated secret rows.
+  const source = (r.data as any).catalogRef?.source;
   const entry = await nephos.GET('/catalog/services/{name}', {
     params: {
       path: { name: String((r.data as any).catalogRef?.name) },
-      query: { source: String((r.data as any).catalogRef?.source) }
+      query: source ? { source: String(source) } : {}
     }
   });
   // Option specs tell the page which config keys are secrets, including the
@@ -43,8 +47,12 @@ export const actions: Actions = {
     const option = String((await request.formData()).get('option') ?? '');
     const session = readSession(cookies.get(SESSION_COOKIE));
     if (!session?.token) {
-      // Pre-token session, or one minted before the API issued tokens. Re-login
-      // is the only way to obtain one, since the console keeps no password.
+      // Pre-token session, or the tokenless one /setup creates. Re-login is the
+      // only way to get a token, since the console keeps no password. The cookie
+      // has to go first: hooks.server.ts would otherwise still see an
+      // authenticated user and redirect /login back to /, so the promised
+      // re-authentication never appears and reveal stays unavailable.
+      cookies.delete(SESSION_COOKIE, { path: '/' });
       throw redirect(303, '/login');
     }
     const res = await nephos.POST(
