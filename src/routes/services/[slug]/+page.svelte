@@ -95,10 +95,22 @@
     hidden.add(name);
   };
 
+  /** Whether a credential is actually on screen, which is the only reason to pause
+   * polling: the 5s `invalidateAll()` clears `form` and would make a revealed
+   * value flicker.
+   *
+   * Scoped to the current slug. Keying it on `revealed` alone meant that after
+   * A -> B, A's leftover value -- correctly withheld from B's markup by the gate
+   * above, but still present in the object -- kept B's polling suppressed, so B's
+   * lifecycle and reconciliation status quietly stopped refreshing. */
+  const showingRevealed = $derived(
+    revealedSlug === s.slug && Object.keys(revealed).some((name) => !hidden.has(name))
+  );
+
   $effect(() => {
     // Reactive, unlike the onMount check this replaces: that ran once at mount
     // when nothing was revealed yet, so the poll never actually paused.
-    if (Object.keys(revealed).length > 0) return;
+    if (showingRevealed) return;
     const id = setInterval(() => invalidateAll(), 5000);
     return () => clearInterval(id);
   });
