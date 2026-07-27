@@ -44,6 +44,12 @@
    * flash and vanish. Holding it here also means "hide" is instant rather than a
    * server round-trip. */
   let revealed = $state<Record<string, { value: string; source: string }>>({});
+  // The slug these values belong to. Part of the state rather than something an
+  // effect clears: SvelteKit reuses this component across /services/A ->
+  // /services/B, and effects run *after* the DOM update, so a reset effect cannot
+  // stop A's credential reaching B's markup first. Every read is gated on this
+  // instead, which is synchronous and cannot be outrun by render order.
+  let revealedSlug = $state<string | null>(null);
   // Explicit, because the `form` fallback below would otherwise resurrect a value
   // the operator just hid: form still holds the last reveal for the whole visit.
   let hidden = $state(new SvelteSet<string>());
@@ -53,22 +59,18 @@
   // populated, and the credential reappeared immediately. Keyed on the response
   // rather than on `hidden` so only a genuinely new reveal clears the marker.
   let appliedReveal: unknown = null;
-  let revealedForSlug: string | null = null;
 
   $effect(() => {
-    // SvelteKit reuses this component across /services/A -> /services/B, so
-    // without keying on the slug the next service rendered the previous one's
-    // credential. Drop everything the moment the identity changes.
-    if (revealedForSlug !== s.slug) {
-      revealedForSlug = s.slug;
-      revealed = {};
-      hidden.clear();
-      appliedReveal = null;
-      return;
-    }
     const result = form?.revealed;
     if (!result || result === appliedReveal) return;
     appliedReveal = result;
+    // A reveal belongs only to the Service that asked for it.
+    if (form?.slug !== s.slug) return;
+    if (revealedSlug !== s.slug) {
+      revealedSlug = s.slug;
+      revealed = {};
+      hidden.clear();
+    }
     revealed[result.option] = result;
     hidden.delete(result.option);
   });
@@ -78,7 +80,10 @@
    * hydration the effect has copied it and local state takes over. */
   const revealedFor = (name: string) => {
     if (hidden.has(name)) return null;
-    if (revealed[name]) return revealed[name];
+    // Identity checked on the read path, not left to an effect. During B's render
+    // `revealedSlug` still says A, so A's value is withheld in the same tick the
+    // markup is produced -- there is no frame in which it exists in B's DOM.
+    if (revealedSlug === s.slug && revealed[name]) return revealed[name];
     // `form` survives a client-side navigation, so the fallback is gated on the
     // reveal belonging to the service on screen.
     const pending = form?.revealed;
