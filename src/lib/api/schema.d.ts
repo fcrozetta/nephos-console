@@ -140,6 +140,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalog/apps/{name}/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get App Dependency Plan
+         * @description Read-only preflight: what an App's capability requirements need before it
+         *     can install (already satisfied, needs a pick, installable, or unresolvable).
+         *     No side effects.
+         */
+        get: operations["get_app_dependency_plan_catalog_apps__name__plan_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalog/services": {
         parameters: {
             query?: never;
@@ -203,6 +225,23 @@ export interface paths {
         put?: never;
         /** Set Default Platform Domain */
         post: operations["set_default_platform_domain_platform_config_domains__name__actions_set_default_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/config/domains/{name}/actions/set-service-portals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set Platform Domain Service Portals */
+        post: operations["set_platform_domain_service_portals_platform_config_domains__name__actions_set_service_portals_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -392,10 +431,14 @@ export interface components {
             /** Password */
             password: string;
         };
-        /** BindingSelection */
-        BindingSelection: {
+        /** BindExistingInstance */
+        BindExistingInstance: {
             /** Serviceinstance */
             serviceInstance: string;
+        };
+        /** BindNewInstall */
+        BindNewInstall: {
+            install: components["schemas"]["InstallDirective"];
         };
         /** CatalogRef */
         CatalogRef: {
@@ -414,6 +457,15 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** InstallDirective */
+        InstallDirective: {
+            /** Name */
+            name: string;
+            /** Source */
+            source: string;
+            /** Instancename */
+            instanceName?: string | null;
+        };
         /** InstallRequest */
         InstallRequest: {
             catalogRef: components["schemas"]["CatalogRef"];
@@ -425,7 +477,7 @@ export interface components {
             };
             /** Bindings */
             bindings?: {
-                [key: string]: components["schemas"]["BindingSelection"];
+                [key: string]: components["schemas"]["BindExistingInstance"] | components["schemas"]["BindNewInstall"];
             };
         };
         /** LifecycleActionBody */
@@ -449,6 +501,16 @@ export interface components {
              * @default false
              */
             default: boolean;
+            /**
+             * Allowsserviceportals
+             * @default false
+             */
+            allowsServicePortals: boolean;
+        };
+        /** PlatformDomainServicePortals */
+        PlatformDomainServicePortals: {
+            /** Allowed */
+            allowed: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -713,6 +775,41 @@ export interface operations {
             };
         };
     };
+    get_app_dependency_plan_catalog_apps__name__plan_get: {
+        parameters: {
+            query?: {
+                source?: string | null;
+            };
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_services_catalog_services_get: {
         parameters: {
             query?: never;
@@ -841,6 +938,43 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_platform_domain_service_portals_platform_config_domains__name__actions_set_service_portals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformDomainServicePortals"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             202: {

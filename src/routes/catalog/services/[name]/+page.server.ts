@@ -10,9 +10,17 @@ async function fetchEntry(name: string, source?: string) {
 
 export const load: PageServerLoad = async ({ params, url }) => {
   const source = url.searchParams.get('source') ?? undefined;
-  const res = await fetchEntry(params.name, source);
+  // Root domains drive the generated portal host, so the form can preview it.
+  const [res, domainsRes] = await Promise.all([
+    fetchEntry(params.name, source),
+    nephos.GET('/platform/config/domains')
+  ]);
   if (res.error || !res.data) throw error(res.response?.status ?? 404, 'Catalog entry not found');
-  return { entry: res.data as any, source };
+  return {
+    entry: res.data as any,
+    source,
+    domains: ((domainsRes.data as any)?.domains ?? []) as any[]
+  };
 };
 
 function coerce(type: string, raw: FormDataEntryValue | null): unknown {

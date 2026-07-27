@@ -36,7 +36,7 @@
   {:else}
     <table>
       <thead>
-        <tr><th>Service</th><th>Requested</th><th>Observed</th><th style="text-align:right">Actions</th></tr>
+        <tr><th>Service</th><th>Requested</th><th>Observed</th><th>Portal</th><th style="text-align:right">Actions</th></tr>
       </thead>
       <tbody>
         {#each data.services as s}
@@ -44,6 +44,13 @@
             <td class="mono"><a href={`/services/${s.slug}`} style="color:var(--accent)">{s.slug}</a></td>
             <td>{s.lifecycle}</td>
             <td><span class="pill {level(s.status)}">{level(s.status)}</span></td>
+            <td>
+              {#if s.portals?.[0]?.published}
+                <a class="mono" style="color:var(--accent)" href={s.portals[0].canonicalUrl} target="_blank" rel="noreferrer">{s.portals[0].canonicalUrl}</a>
+              {:else if s.portals?.length}
+                <span class="pill">unpublished</span>
+              {:else}—{/if}
+            </td>
             <td style="text-align:right">
               <div style="display:inline-flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
                 {#each actions as a}
