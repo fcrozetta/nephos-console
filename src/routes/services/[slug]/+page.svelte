@@ -53,8 +53,19 @@
   // populated, and the credential reappeared immediately. Keyed on the response
   // rather than on `hidden` so only a genuinely new reveal clears the marker.
   let appliedReveal: unknown = null;
+  let revealedForSlug: string | null = null;
 
   $effect(() => {
+    // SvelteKit reuses this component across /services/A -> /services/B, so
+    // without keying on the slug the next service rendered the previous one's
+    // credential. Drop everything the moment the identity changes.
+    if (revealedForSlug !== s.slug) {
+      revealedForSlug = s.slug;
+      revealed = {};
+      hidden.clear();
+      appliedReveal = null;
+      return;
+    }
     const result = form?.revealed;
     if (!result || result === appliedReveal) return;
     appliedReveal = result;
@@ -67,7 +78,11 @@
    * hydration the effect has copied it and local state takes over. */
   const revealedFor = (name: string) => {
     if (hidden.has(name)) return null;
-    return revealed[name] ?? (form?.revealed?.option === name ? form.revealed : null);
+    if (revealed[name]) return revealed[name];
+    // `form` survives a client-side navigation, so the fallback is gated on the
+    // reveal belonging to the service on screen.
+    const pending = form?.revealed;
+    return pending?.option === name && form?.slug === s.slug ? pending : null;
   };
 
   const hide = (name: string) => {
@@ -228,6 +243,12 @@
   <h2 style="font-size:14px;margin:0 0 10px;color:var(--muted)">Config</h2>
   {#if form?.revealError}
     <div class="banner">{form.revealMessage} ({form.revealError})</div>
+  {/if}
+  {#if data.optionsError}
+    <div class="banner">
+      Could not read this Service's catalog entry ({data.optionsError}), so
+      generated secrets are not listed below.
+    </div>
   {/if}
   {#if configRows.length === 0}
     <div class="sub" style="color:var(--meta)">No config values.</div>

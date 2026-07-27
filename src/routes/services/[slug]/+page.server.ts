@@ -19,10 +19,13 @@ export const load: PageServerLoad = async ({ params }) => {
     }
   });
   // Option specs tell the page which config keys are secrets, including the
-  // generated ones that never appear in the config payload at all.
+  // generated ones that never appear in the config payload at all. If this lookup
+  // fails the page cannot know a generated secret exists, so those rows vanish
+  // silently. Surface it instead of rendering a confidently incomplete panel.
   return {
     service: r.data as any,
-    options: ((entry.data as any)?.config?.options ?? []) as any[]
+    options: ((entry.data as any)?.config?.options ?? []) as any[],
+    optionsError: entry.error ? ((entry.error as any)?.error?.code ?? 'catalog_unavailable') : null
   };
 };
 
@@ -76,6 +79,8 @@ export const actions: Actions = {
         option
       });
     }
-    return { revealed: { option, ...(res.data as any) } };
+    // `slug` so the page can tell a reveal for this service from one that
+    // survived a client-side navigation from another service's page.
+    return { slug: params.slug, revealed: { option, ...(res.data as any) } };
   }
 };
